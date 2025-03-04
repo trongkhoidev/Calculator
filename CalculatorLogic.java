@@ -68,7 +68,7 @@ public class CalculatorLogic {
             
             // Check for empty second number or missing operator
             if (secondNum.isEmpty() || operator.isEmpty()) {
-                return "Syntax ERROR";
+                return "Math ERROR";
             }
 
             // Replace comma with dot for parsing
@@ -153,7 +153,7 @@ public class CalculatorLogic {
             return formatResult(result).replace(".", ",");
 
         } catch (NumberFormatException e) {
-            return "Syntax ERROR";
+            return "Math ERROR";
         }
     }
 } 
