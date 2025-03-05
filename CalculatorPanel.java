@@ -1,5 +1,6 @@
 import java.awt.*;
 import java.awt.event.*;
+import java.util.ArrayList;
 import javax.swing.*;
 
 public class CalculatorPanel extends JPanel {
@@ -235,61 +236,35 @@ public class CalculatorPanel extends JPanel {
             String secondNumber = display.getText();
             String expression;
             String result;
-            
-            if (calculator.getOperator().equals("√")) {
-                // Xử lý căn bậc 2
-                expression = "√" + secondNumber;
-                result = calculator.calculateResult("0", secondNumber, "√");
-                display.setText(result);
-                expressionDisplay.setText(expression + " =");
-                calculator.addToHistory(expression + " = " + result);
+
+            if (calculator.isStart()) {
+                display.setText("Math ERROR");
                 calculator.setResult(true);
-                calculator.setFirstNumber("");
-                calculator.setOperator("");
-            } else if (!calculator.getFirstNumber().isEmpty() && !calculator.getOperator().isEmpty()) {
-                // Kiểm tra nếu chưa nhập số thứ hai
-                if (calculator.isStart()) {
-                    display.setText("Math ERROR");
-                    calculator.setResult(true);
-                    return;
-                }
-
-                // Xử lý các phép tính kết hợp
-                String[] parts = expressionDisplay.getText().split(" ");
-                if (parts.length > 2) {
-                    // Có phép tính kết hợp
-                    String firstNum = parts[0];
-                    String firstOp = parts[1];
-                    String secondOp = parts[2];
-                    String tempResult;
-
-                    if (secondOp.equals("√")) {
-                        // Tính căn bậc 2 trước
-                        tempResult = calculator.calculateResult("0", secondNumber, "√");
-                    } else if (parts.length > 3 && parts[3].equals("^")) {
-                        // Tính lũy thừa trước: parts[2] là cơ số, secondNumber là số mũ
-                        tempResult = calculator.calculateResult(parts[2], secondNumber, "^");
-                    } else {
-                        tempResult = secondNumber;
-                    }
-
-                    // Tính toán kết quả cuối cùng với phép tính đầu tiên
-                    result = calculator.calculateResult(firstNum, tempResult, firstOp);
-                    display.setText(result);
-                    expressionDisplay.setText(expressionDisplay.getText() + " " + secondNumber + " =");
-                    calculator.addToHistory(expressionDisplay.getText() + " = " + result);
-                } else {
-                    // Xử lý các phép tính thông thường
-                    expression = calculator.getFirstNumber() + " " + calculator.getOperator() + " " + secondNumber;
-                    result = calculator.calculateResult(calculator.getFirstNumber(), secondNumber, calculator.getOperator());
-                    display.setText(result);
-                    expressionDisplay.setText(expression + " =");
-                    calculator.addToHistory(expression + " = " + result);
-                }
-                calculator.setResult(true);
-                calculator.setFirstNumber("");
-                calculator.setOperator("");
+                return;
             }
+
+            // Cập nhật biểu thức hiện tại với số cuối cùng
+            String currentExpression = expressionDisplay.getText();
+            if (!currentExpression.isEmpty()) {
+                if (currentExpression.endsWith("√")) {
+                    expression = currentExpression + secondNumber;
+                } else if (currentExpression.endsWith("^")) {
+                    expression = currentExpression + " " + secondNumber;
+                } else {
+                    expression = currentExpression + " " + secondNumber;
+                }
+            } else {
+                expression = secondNumber;
+            }
+
+            // Tính toán kết quả
+            result = evaluator.evaluate(expression);
+            display.setText(result);
+            expressionDisplay.setText(expression + " =");
+            calculator.addToHistory(expression + " = " + result);
+            calculator.setResult(true);
+            calculator.setFirstNumber("");
+            calculator.setOperator("");
         }
 
         private void handleDecimalPoint() {
@@ -318,49 +293,35 @@ public class CalculatorPanel extends JPanel {
                     return;
                 }
 
-                // Nếu đã có phép tính trước đó và nhấn √ hoặc ^
-                if (!calculator.getFirstNumber().isEmpty() && !calculator.getOperator().isEmpty()) {
+                String currentExpression = expressionDisplay.getText();
+                String currentNumber = display.getText();
+
+                if (currentExpression.isEmpty()) {
+                    // Bắt đầu biểu thức mới
                     if (operator.equals("√")) {
-                        // Lưu lại biểu thức hiện tại và chuẩn bị cho căn bậc 2
-                        String currentExpression = expressionDisplay.getText();
-                        expressionDisplay.setText(currentExpression + " √");
+                        expressionDisplay.setText("√");
                         display.setText("0");
-                        calculator.setStart(true);
-                    } else if (operator.equals("^")) {
-                        // Lưu lại biểu thức hiện tại và chuẩn bị cho lũy thừa
-                        String currentExpression = expressionDisplay.getText();
-                        String currentNumber = display.getText();
-                        expressionDisplay.setText(currentExpression + " " + currentNumber + " ^");
-                        display.setText("0");
-                        calculator.setStart(true);
                     } else {
-                        // Xử lý các phép tính thông thường
-                        calculator.setFirstNumber(display.getText());
-                        calculator.setOperator(operator);
-                        expressionDisplay.setText(calculator.getFirstNumber() + " " + operator);
-                        calculator.setStart(true);
+                        expressionDisplay.setText(currentNumber + " " + operator);
                     }
-                    return;
+                } else {
+                    // Thêm vào biểu thức hiện tại
+                    if (operator.equals("√")) {
+                        expressionDisplay.setText(currentExpression + " " + operator);
+                        display.setText("0");
+                    } else if (operator.equals("^")) {
+                        expressionDisplay.setText(currentExpression + " " + currentNumber + " " + operator);
+                        display.setText("0");
+                    } else if (!calculator.isStart()) {
+                        // Nếu đã nhập số mới, thêm số và phép tính vào biểu thức
+                        expressionDisplay.setText(currentExpression + " " + currentNumber + " " + operator);
+                    } else {
+                        // Nếu chưa nhập số mới, chỉ thay đổi phép tính
+                        expressionDisplay.setText(currentExpression.substring(0, currentExpression.length() - 1) + operator);
+                    }
                 }
 
-                if (operator.equals("√")) {
-                    calculator.setOperator("√");
-                    calculator.setFirstNumber("");
-                    expressionDisplay.setText("√");
-                    calculator.setStart(true);
-                    display.setText("0");
-                } else if (operator.equals("^")) {
-                    // Lưu số mũ và hiển thị biểu thức
-                    calculator.setFirstNumber(display.getText());
-                    calculator.setOperator("^");
-                    expressionDisplay.setText(display.getText() + " ^");
-                    calculator.setStart(true);
-                } else {
-                    calculator.setFirstNumber(display.getText());
-                    calculator.setOperator(operator);
-                    expressionDisplay.setText(calculator.getFirstNumber() + " " + operator);
-                    calculator.setStart(true);
-                }
+                calculator.setStart(true);
                 calculator.setResult(false);
             } else if (operator.equals("-")) {
                 // Cho phép nhập số âm khi display trống
@@ -369,6 +330,68 @@ public class CalculatorPanel extends JPanel {
             }
         }
     }
+
+    private class ExpressionEvaluator {
+        private final ArrayList<String> numbers = new ArrayList<>();
+        private final ArrayList<String> operators = new ArrayList<>();
+
+        public String evaluate(String expression) {
+            // Tách biểu thức thành các số và phép tính
+            String[] parts = expression.split(" ");
+            numbers.clear();
+            operators.clear();
+
+            for (String part : parts) {
+                if (part.matches("[+\\-×÷^√]")) {
+                    operators.add(part);
+                } else if (!part.equals("=")) {
+                    numbers.add(part);
+                }
+            }
+
+            // Xử lý căn bậc 2 trước
+            for (int i = 0; i < operators.size(); i++) {
+                if (operators.get(i).equals("√")) {
+                    String result = calculator.calculateResult("0", numbers.get(i + 1), "√");
+                    numbers.set(i + 1, result);
+                }
+            }
+
+            // Xử lý lũy thừa
+            for (int i = 0; i < operators.size(); i++) {
+                if (operators.get(i).equals("^")) {
+                    String result = calculator.calculateResult(numbers.get(i), numbers.get(i + 1), "^");
+                    numbers.set(i, result);
+                    numbers.remove(i + 1);
+                    operators.remove(i);
+                    i--;
+                }
+            }
+
+            // Xử lý nhân và chia
+            for (int i = 0; i < operators.size(); i++) {
+                if (operators.get(i).equals("×") || operators.get(i).equals("÷")) {
+                    String result = calculator.calculateResult(numbers.get(i), numbers.get(i + 1), operators.get(i));
+                    numbers.set(i, result);
+                    numbers.remove(i + 1);
+                    operators.remove(i);
+                    i--;
+                }
+            }
+
+            // Xử lý cộng và trừ
+            while (!operators.isEmpty()) {
+                String result = calculator.calculateResult(numbers.get(0), numbers.get(1), operators.get(0));
+                numbers.set(0, result);
+                numbers.remove(1);
+                operators.remove(0);
+            }
+
+            return numbers.get(0);
+        }
+    }
+
+    private final ExpressionEvaluator evaluator = new ExpressionEvaluator();
 
     // RoundedButton class
     class RoundedButton extends JButton {
