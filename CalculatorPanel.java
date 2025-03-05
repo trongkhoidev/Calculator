@@ -247,6 +247,12 @@ public class CalculatorPanel extends JPanel {
                 calculator.setFirstNumber("");
                 calculator.setOperator("");
             } else if (!calculator.getFirstNumber().isEmpty() && !calculator.getOperator().isEmpty()) {
+                // Kiểm tra nếu số thứ hai giống số thứ nhất và người dùng chưa nhập số thứ hai
+                if (calculator.isStart() || secondNumber.equals(calculator.getFirstNumber())) {
+                    display.setText("Math ERROR");
+                    calculator.setResult(true);
+                    return;
+                }
                 // Xử lý các phép tính khác
                 expression = calculator.getFirstNumber() + " " + calculator.getOperator() + " " + secondNumber;
                 result = calculator.calculateResult(calculator.getFirstNumber(), secondNumber, calculator.getOperator());

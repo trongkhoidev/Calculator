@@ -67,7 +67,7 @@ public class CalculatorLogic {
             }
             
             // Check for empty second number or missing operator
-            if (secondNum.isEmpty() || operator.isEmpty()) {
+            if (secondNum == null || secondNum.isEmpty() || operator.isEmpty()) {
                 return "Math ERROR";
             }
 
