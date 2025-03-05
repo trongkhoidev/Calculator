@@ -247,18 +247,45 @@ public class CalculatorPanel extends JPanel {
                 calculator.setFirstNumber("");
                 calculator.setOperator("");
             } else if (!calculator.getFirstNumber().isEmpty() && !calculator.getOperator().isEmpty()) {
-                // Kiểm tra nếu số thứ hai giống số thứ nhất và người dùng chưa nhập số thứ hai
-                if (calculator.isStart() || secondNumber.equals(calculator.getFirstNumber())) {
+                // Kiểm tra nếu chưa nhập số thứ hai
+                if (calculator.isStart()) {
                     display.setText("Math ERROR");
                     calculator.setResult(true);
                     return;
                 }
-                // Xử lý các phép tính khác
-                expression = calculator.getFirstNumber() + " " + calculator.getOperator() + " " + secondNumber;
-                result = calculator.calculateResult(calculator.getFirstNumber(), secondNumber, calculator.getOperator());
-                display.setText(result);
-                expressionDisplay.setText(expression + " =");
-                calculator.addToHistory(expression + " = " + result);
+
+                // Xử lý các phép tính kết hợp
+                String[] parts = expressionDisplay.getText().split(" ");
+                if (parts.length > 2) {
+                    // Có phép tính kết hợp
+                    String firstNum = parts[0];
+                    String firstOp = parts[1];
+                    String secondOp = parts[2];
+                    String tempResult;
+
+                    if (secondOp.equals("√")) {
+                        // Tính căn bậc 2 trước
+                        tempResult = calculator.calculateResult("0", secondNumber, "√");
+                    } else if (parts.length > 3 && parts[3].equals("^")) {
+                        // Tính lũy thừa trước: parts[2] là cơ số, secondNumber là số mũ
+                        tempResult = calculator.calculateResult(parts[2], secondNumber, "^");
+                    } else {
+                        tempResult = secondNumber;
+                    }
+
+                    // Tính toán kết quả cuối cùng với phép tính đầu tiên
+                    result = calculator.calculateResult(firstNum, tempResult, firstOp);
+                    display.setText(result);
+                    expressionDisplay.setText(expressionDisplay.getText() + " " + secondNumber + " =");
+                    calculator.addToHistory(expressionDisplay.getText() + " = " + result);
+                } else {
+                    // Xử lý các phép tính thông thường
+                    expression = calculator.getFirstNumber() + " " + calculator.getOperator() + " " + secondNumber;
+                    result = calculator.calculateResult(calculator.getFirstNumber(), secondNumber, calculator.getOperator());
+                    display.setText(result);
+                    expressionDisplay.setText(expression + " =");
+                    calculator.addToHistory(expression + " = " + result);
+                }
                 calculator.setResult(true);
                 calculator.setFirstNumber("");
                 calculator.setOperator("");
@@ -288,6 +315,31 @@ public class CalculatorPanel extends JPanel {
                     // Cho phép nhập số âm
                     display.setText("-");
                     calculator.setStart(false);
+                    return;
+                }
+
+                // Nếu đã có phép tính trước đó và nhấn √ hoặc ^
+                if (!calculator.getFirstNumber().isEmpty() && !calculator.getOperator().isEmpty()) {
+                    if (operator.equals("√")) {
+                        // Lưu lại biểu thức hiện tại và chuẩn bị cho căn bậc 2
+                        String currentExpression = expressionDisplay.getText();
+                        expressionDisplay.setText(currentExpression + " √");
+                        display.setText("0");
+                        calculator.setStart(true);
+                    } else if (operator.equals("^")) {
+                        // Lưu lại biểu thức hiện tại và chuẩn bị cho lũy thừa
+                        String currentExpression = expressionDisplay.getText();
+                        String currentNumber = display.getText();
+                        expressionDisplay.setText(currentExpression + " " + currentNumber + " ^");
+                        display.setText("0");
+                        calculator.setStart(true);
+                    } else {
+                        // Xử lý các phép tính thông thường
+                        calculator.setFirstNumber(display.getText());
+                        calculator.setOperator(operator);
+                        expressionDisplay.setText(calculator.getFirstNumber() + " " + operator);
+                        calculator.setStart(true);
+                    }
                     return;
                 }
 
