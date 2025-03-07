@@ -3,11 +3,19 @@ import java.awt.event.*;
 import java.util.ArrayList;
 import javax.swing.*;
 
+/**
+ * CalculatorPanel class represents the main calculator interface.
+ * It handles the display and button layout for the calculator.
+ */
 public class CalculatorPanel extends JPanel {
-    private final JTextField display;
-    private final JTextField expressionDisplay;
-    private final CalculatorLogic calculator;
+    private final JTextField display;           // Main number display
+    private final JTextField expressionDisplay; // Expression display
+    private final CalculatorLogic calculator;   // Reference to calculator logic
 
+    /**
+     * Constructor initializes the calculator panel and sets up the UI components
+     * @param calculator Reference to the calculator logic
+     */
     public CalculatorPanel(CalculatorLogic calculator) {
         this.calculator = calculator;
         this.display = new JTextField("0");
@@ -16,19 +24,24 @@ public class CalculatorPanel extends JPanel {
         setLayout(new BorderLayout(0, 0));
         setBackground(Color.BLACK);
 
-        // Panel chứa màn hình hiển thị
+        // Create display panel
         JPanel displayPanel = createDisplayPanel();
         add(displayPanel, BorderLayout.NORTH);
 
-        // Panel chứa các nút
+        // Create button panel
         JPanel buttonPanel = createButtonPanel();
         add(buttonPanel, BorderLayout.CENTER);
     }
 
+    /**
+     * Creates and configures the display panel containing the calculator displays
+     * @return Configured display panel
+     */
     private JPanel createDisplayPanel() {
         JPanel displayPanel = new JPanel(new BorderLayout(0, 0));
         displayPanel.setBackground(Color.BLACK);
 
+        // Configure expression display
         expressionDisplay.setHorizontalAlignment(JTextField.RIGHT);
         expressionDisplay.setEditable(false);
         expressionDisplay.setFont(new Font("Digital-7", Font.PLAIN, 24));
@@ -38,6 +51,7 @@ public class CalculatorPanel extends JPanel {
         expressionDisplay.setBorder(null);
         displayPanel.add(expressionDisplay, BorderLayout.NORTH);
 
+        // Configure main display
         display.setHorizontalAlignment(JTextField.RIGHT);
         display.setEditable(false);
         display.setFont(new Font("Digital-7", Font.BOLD, 60));
@@ -50,12 +64,17 @@ public class CalculatorPanel extends JPanel {
         return displayPanel;
     }
 
+    /**
+     * Creates and configures the button panel containing calculator buttons
+     * @return Configured button panel
+     */
     private JPanel createButtonPanel() {
         JPanel buttonPanel = new JPanel();
         buttonPanel.setLayout(new GridLayout(5, 4, 1, 1));
         buttonPanel.setBackground(Color.BLACK);
         buttonPanel.setBorder(BorderFactory.createEmptyBorder(1, 1, 1, 1));
 
+        // Define button layout
         String[] buttonLabels = {
             "C", "←", "^/√", "÷",
             "7", "8", "9", "×",
@@ -64,6 +83,7 @@ public class CalculatorPanel extends JPanel {
             "0", ",", "%", "="
         };
 
+        // Create and add buttons
         for (String label : buttonLabels) {
             RoundedButton button = createButton(label);
             if (label.equals("^/√")) {
@@ -75,12 +95,16 @@ public class CalculatorPanel extends JPanel {
         return buttonPanel;
     }
 
+    /**
+     * Adds power and square root popup menu to the specified button
+     * @param button Button to add popup menu to
+     */
     private void addPowerSqrtPopupMenu(RoundedButton button) {
         JPopupMenu popupMenu = new JPopupMenu();
         popupMenu.setBackground(new Color(40, 40, 40));
         popupMenu.setBorder(BorderFactory.createLineBorder(new Color(60, 60, 60), 1));
 
-        JMenuItem sqrtItem = new JMenuItem("Căn bậc 2 (√)");
+        JMenuItem sqrtItem = new JMenuItem("Square root (√)");
         sqrtItem.setFont(new Font("Arial", Font.BOLD, 14));
         sqrtItem.setForeground(Color.BLACK);
         sqrtItem.setBackground(new Color(40, 40, 40));
@@ -94,7 +118,7 @@ public class CalculatorPanel extends JPanel {
             }
         });
 
-        JMenuItem powerItem = new JMenuItem("Lũy thừa (^)");
+        JMenuItem powerItem = new JMenuItem("Exponentiation (^)");
         powerItem.setFont(new Font("Arial", Font.BOLD, 14));
         powerItem.setForeground(Color.BLACK);
         powerItem.setBackground(new Color(40, 40, 40));
@@ -116,6 +140,11 @@ public class CalculatorPanel extends JPanel {
         });
     }
 
+    /**
+     * Creates and configures a calculator button with the specified label
+     * @param label Text to display on the button
+     * @return Configured RoundedButton
+     */
     private RoundedButton createButton(String label) {
         RoundedButton button = new RoundedButton(label);
         button.setFont(new Font("Arial", Font.BOLD, 28));
@@ -143,6 +172,10 @@ public class CalculatorPanel extends JPanel {
         return button;
     }
 
+    /**
+     * Adds hover effect to calculator buttons
+     * @param button Button to add hover effect to
+     */
     private void addButtonHoverEffect(RoundedButton button) {
         button.addMouseListener(new MouseAdapter() {
             @Override
@@ -169,6 +202,9 @@ public class CalculatorPanel extends JPanel {
         });
     }
 
+    /**
+     * Inner class that handles button click events
+     */
     private class ButtonClickListener implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent event) {
@@ -237,25 +273,25 @@ public class CalculatorPanel extends JPanel {
             String expression;
             String result;
 
-            // Nếu chưa có phép tính hoặc chưa nhập gì, không làm gì cả
+            // If there's no calculation or nothing entered, do nothing
             if (calculator.isStart() && calculator.getOperator().isEmpty()) {
                 return;
             }
 
-            // Nếu đã có kết quả và không có phép tính mới, không làm gì cả
+            // If there's already a result and no new calculation, do nothing
             if (calculator.isResult() && calculator.getOperator().isEmpty()) {
                 return;
             }
 
-            // Cập nhật biểu thức hiện tại với số cuối cùng
+            // Update current expression with the last number
             String currentExpression = expressionDisplay.getText();
             if (!currentExpression.isEmpty()) {
                 if (currentExpression.equals("√")) {
-                    // Nếu chỉ có phép tính căn
+                    // If there's only a square root calculation
                     expression = "√" + secondNumber;
                     expressionDisplay.setText(expression);
                 } else if (currentExpression.endsWith("√")) {
-                    // Nếu có phép tính với căn
+                    // If there's a calculation with square root
                     expression = currentExpression + secondNumber;
                     expressionDisplay.setText(expression);
                 } else if (currentExpression.endsWith("^")) {
@@ -270,7 +306,7 @@ public class CalculatorPanel extends JPanel {
                 expressionDisplay.setText(expression);
             }
 
-            // Tính toán kết quả
+            // Calculate result
             result = evaluator.evaluate(expression);
             display.setText(result);
             
@@ -301,44 +337,44 @@ public class CalculatorPanel extends JPanel {
             String currentExpression = expressionDisplay.getText();
             String currentDisplay = display.getText();
 
-            // Xử lý đặc biệt cho dấu trừ
+            // Special handling for minus sign
             if (operator.equals("-")) {
-                // Trường hợp 1: Đang ở trạng thái bắt đầu hoặc màn hình hiển thị "0"
+                // Case 1: Starting state or display "0"
                 if (calculator.isStart() || currentDisplay.equals("0")) {
-                    // Kiểm tra nếu biểu thức không rỗng và kết thúc bằng phép toán
+                    // Check if expression is not empty and ends with operation
                     if (!currentExpression.isEmpty() && currentExpression.matches(".*[×÷+\\-]\\s*$")) {
-                        // Nếu đã có dấu trừ, không cho phép thêm nữa
+                        // If there's already a minus, no need to add more
                         if (currentExpression.endsWith(" -") || currentDisplay.startsWith("-")) {
                             return;
                         }
                     }
-                    // Cho phép thêm dấu trừ nếu chưa có
+                    // Allow adding minus if not already started with
                     if (!currentDisplay.startsWith("-")) {
                         display.setText("-");
                         calculator.setStart(false);
                     }
                     return;
                 }
-                // Trường hợp 2: Đang nhập số
+                // Case 2: Entering a number
                 else if (!calculator.isStart()) {
-                    // Nếu đã có dấu trừ, không cho phép thêm nữa
+                    // If there's already a minus, no need to add more
                     if (currentDisplay.startsWith("-") || (currentExpression.endsWith(" -"))) {
                         return;
                     }
                 }
             }
 
-            // Xử lý các phép toán khác và cập nhật biểu thức
+            // Handle other operations and update expression
             if (!currentDisplay.isEmpty()) {
                 if (currentExpression.isEmpty()) {
-                    // Bắt đầu biểu thức mới
+                    // Start new expression
                     if (operator.equals("√")) {
                         expressionDisplay.setText("√");
                     } else {
                         expressionDisplay.setText(currentDisplay + " " + operator);
                     }
                 } else {
-                    // Thêm vào biểu thức hiện tại
+                    // Add to current expression
                     if (operator.equals("√")) {
                         if (calculator.isResult()) {
                             expressionDisplay.setText("√");
@@ -355,14 +391,14 @@ public class CalculatorPanel extends JPanel {
                         if (calculator.isResult()) {
                             expressionDisplay.setText(currentDisplay + " " + operator);
                         } else if (!calculator.isStart()) {
-                            // Nếu biểu thức kết thúc bằng phép toán, thay thế nó
+                            // If expression ends with operation, replace it
                             if (currentExpression.matches(".*[×÷+\\-]\\s*$")) {
                                 expressionDisplay.setText(currentExpression.replaceAll("[×÷+\\-]\\s*$", operator));
                             } else {
                                 expressionDisplay.setText(currentExpression + " " + currentDisplay + " " + operator);
                             }
                         } else {
-                            // Thay đổi phép toán cuối cùng
+                            // Change last operation
                             expressionDisplay.setText(currentExpression.substring(0, currentExpression.length() - 1) + operator);
                         }
                     }
@@ -375,34 +411,37 @@ public class CalculatorPanel extends JPanel {
         }
     }
 
+    /**
+     * Inner class that evaluates mathematical expressions
+     */
     private class ExpressionEvaluator {
         private final ArrayList<String> numbers = new ArrayList<>();
         private final ArrayList<String> operators = new ArrayList<>();
 
         public String evaluate(String expression) {
-            // Tách biểu thức thành các số và phép tính
+            // Split expression into numbers and operations
             String[] parts = expression.split(" ");
             numbers.clear();
             operators.clear();
 
-            // Xử lý từng phần của biểu thức
+            // Process each part of the expression
             for (int i = 0; i < parts.length; i++) {
                 String part = parts[i];
                 if (part.matches("[+\\-×÷^%]")) {
                     operators.add(part);
                 } else if (part.startsWith("√")) {
-                    // Xử lý phép căn
+                    // Process square root
                     String numberToSqrt;
                     if (part.length() > 1) {
-                        // Nếu số đi liền với dấu căn (√9)
+                        // If number is next to square root (√9)
                         numberToSqrt = part.substring(1);
                     } else if (i + 1 < parts.length) {
-                        // Nếu số đứng riêng (√ 9)
+                        // If number is standalone (√ 9)
                         numberToSqrt = parts[++i];
                     } else {
                         return "Math ERROR";
                     }
-                    // Tính căn bậc hai của số
+                    // Calculate square root of number
                     String sqrtResult = calculator.calculateResult("0", numberToSqrt, "√");
                     if (sqrtResult.equals("Math ERROR")) return sqrtResult;
                     numbers.add(sqrtResult);
@@ -411,8 +450,8 @@ public class CalculatorPanel extends JPanel {
                 }
             }
 
-            // Xử lý các phép tính còn lại theo thứ tự ưu tiên
-            // Lũy thừa
+            // Process remaining operations in order of precedence
+            // Exponentiation
             for (int i = 0; i < operators.size(); i++) {
                 if (operators.get(i).equals("^")) {
                     String result = calculator.calculateResult(numbers.get(i), numbers.get(i + 1), "^");
@@ -424,7 +463,7 @@ public class CalculatorPanel extends JPanel {
                 }
             }
 
-            // Nhân, chia và chia lấy dư
+            // Multiplication, division, and modulo
             for (int i = 0; i < operators.size(); i++) {
                 if (operators.get(i).equals("×") || operators.get(i).equals("÷") || operators.get(i).equals("%")) {
                     String result = calculator.calculateResult(numbers.get(i), numbers.get(i + 1), operators.get(i));
@@ -436,7 +475,7 @@ public class CalculatorPanel extends JPanel {
                 }
             }
 
-            // Cộng và trừ
+            // Addition and subtraction
             while (!operators.isEmpty()) {
                 String result = calculator.calculateResult(numbers.get(0), numbers.get(1), operators.get(0));
                 if (result.equals("Math ERROR")) return result;
@@ -451,7 +490,9 @@ public class CalculatorPanel extends JPanel {
 
     private final ExpressionEvaluator evaluator = new ExpressionEvaluator();
 
-    // RoundedButton class
+    /**
+     * Inner class that creates rounded buttons for the calculator
+     */
     class RoundedButton extends JButton {
         private final int radius = 100;
 

@@ -1,17 +1,25 @@
 import java.awt.*;
 import javax.swing.*;
 
+/**
+ * HistoryPanel class represents the history view of the calculator.
+ * It displays a list of previous calculations and provides functionality to clear the history.
+ */
 public class HistoryPanel extends JPanel {
-    private final JTextArea historyArea;
-    private final CalculatorLogic calculator;
-    private final JButton clearButton;
+    private final JTextArea historyArea;      // Area to display calculation history
+    private final CalculatorLogic calculator; // Reference to calculator logic
+    private final JButton clearButton;        // Button to clear history
 
+    /**
+     * Constructor initializes the history panel and sets up the UI components
+     * @param calculator Reference to the calculator logic
+     */
     public HistoryPanel(CalculatorLogic calculator) {
         this.calculator = calculator;
         setLayout(new BorderLayout());
         setBackground(Color.BLACK);
 
-        // Tạo khu vực hiển thị lịch sử
+        // Create history display area
         historyArea = new JTextArea();
         historyArea.setEditable(false);
         historyArea.setFont(new Font("Digital-7", Font.PLAIN, 18));
@@ -21,13 +29,13 @@ public class HistoryPanel extends JPanel {
         historyArea.setForeground(Color.WHITE);
         historyArea.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        // Tạo ScrollPane cho khu vực lịch sử
+        // Create scroll pane for history area
         JScrollPane scrollPane = new JScrollPane(historyArea);
         scrollPane.setBackground(Color.BLACK);
         scrollPane.setBorder(null);
         add(scrollPane, BorderLayout.CENTER);
 
-        // Tạo panel chứa nút Clear History
+        // Create panel for Clear History button
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         buttonPanel.setBackground(Color.BLACK);
         
@@ -41,11 +49,14 @@ public class HistoryPanel extends JPanel {
         buttonPanel.add(clearButton);
         add(buttonPanel, BorderLayout.SOUTH);
 
-        // Timer để cập nhật lịch sử mỗi giây
+        // Set up timer for automatic history updates
         Timer timer = new Timer(1000, e -> updateHistory());
         timer.start();
     }
 
+    /**
+     * Updates the history display area with current calculation history
+     */
     private void updateHistory() {
         StringBuilder sb = new StringBuilder();
         for (String calc : calculator.getHistory()) {
@@ -54,6 +65,9 @@ public class HistoryPanel extends JPanel {
         historyArea.setText(sb.toString());
     }
 
+    /**
+     * Clears all calculation history
+     */
     private void clearHistory() {
         calculator.getHistory().clear();
         updateHistory();

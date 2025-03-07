@@ -1,39 +1,45 @@
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 
+/**
+ * CalculatorLogic class handles all the mathematical operations and state management
+ * for the calculator application. It includes basic arithmetic operations,
+ * advanced operations like square root and power, and maintains calculation history.
+ */
 public class CalculatorLogic {
-    // Constants for formatting
+    // Constants for formatting and limits
     private static final int MAX_DIGITS = 10;
     private static final double MAX_VALUE = 1e100;
     private static final double MIN_VALUE = 1e-100;
     
-    // Calculator state
-    private String displayValue = "0";   // Giá trị hiển thị
-    private boolean isNewNumber = true;  // Đánh dấu bắt đầu nhập số mới
-    private boolean hasDecimal = false;  // Đánh dấu đã có dấu thập phân
-    private boolean isStart = true;      // Đánh dấu trạng thái bắt đầu
-    private boolean isResult = false;    // Đánh dấu vừa tính kết quả
-    private String firstNumber = "";     // Số thứ nhất trong phép tính
-    private String operator = "";        // Toán tử hiện tại
-    private boolean isNegative = false;  // Đánh dấu đang nhập số âm
-    private boolean waitForSquareRoot = false; // Đánh dấu đang đợi nhập số để tính căn
-    private boolean negativeResult = false;    // Đánh dấu kết quả sẽ là số âm
-    private String lastResult = "";      // Lưu kết quả cuối cùng để tính tiếp
-    private String pendingOperation = ""; // Phép toán đang chờ thực hiện
+    // Calculator state variables
+    private String displayValue = "0";   // Current value shown on display
+    private boolean isNewNumber = true;  // Flag for starting a new number input
+    private boolean hasDecimal = false;  // Flag for decimal point presence
+    private boolean isStart = true;      // Flag for calculator's initial state
+    private boolean isResult = false;    // Flag for result state
+    private String firstNumber = "";     // First operand in calculation
+    private String operator = "";        // Current operator
+    private boolean isNegative = false;  // Flag for negative number input
+    private boolean waitForSquareRoot = false; // Flag for square root operation
+    private boolean negativeResult = false;    // Flag for negative result
+    private String lastResult = "";      // Stores last calculation result
+    private String pendingOperation = ""; // Stores pending operation
     
-    // History
+    // History storage
     private final ArrayList<String> history = new ArrayList<>();
     
-    // Number formatters
+    // Number formatters for display
     private final DecimalFormat standardFormat = new DecimalFormat("#,##0.########");
     private final DecimalFormat scientificFormat = new DecimalFormat("0.########E0");
 
     /**
-     * Nhập số hoặc dấu thập phân
+     * Handles number input and decimal point
+     * @param input The number or decimal point to be processed
      */
     public void inputNumber(String input) {
         if (isResult) {
-            // Nếu vừa có kết quả và nhập số mới, reset để bắt đầu phép tính mới
+            // If there's a previous result and new input, reset for new calculation
             displayValue = "0";
             firstNumber = "";
             operator = "";
@@ -42,7 +48,7 @@ public class CalculatorLogic {
             negativeResult = false;
         }
 
-        // Xử lý dấu thập phân
+        // Handle decimal point input
         if (input.equals(",")) {
             if (isNewNumber) {
                 displayValue = "0,";
@@ -54,7 +60,7 @@ public class CalculatorLogic {
             return;
         }
 
-        // Xử lý nhập số
+        // Handle number input
         if (isNewNumber) {
             displayValue = isNegative ? "-" + input : input;
             isNewNumber = false;
@@ -66,10 +72,10 @@ public class CalculatorLogic {
     }
 
     /**
-     * Xử lý các phép toán (+, -, ×, ÷, %, ^)
+     * Handles mathematical operations (+, -, ×, ÷, %, ^)
      */
     public String inputOperator(String newOperator) {
-        // Xử lý dấu trừ đặc biệt cho số âm
+        // Handle special negative sign for negative numbers
         if (newOperator.equals("-")) {
             if (isStart || isNewNumber || waitForSquareRoot) {
                 isNegative = !isNegative;
@@ -83,7 +89,7 @@ public class CalculatorLogic {
             }
         }
 
-        // Nếu đang đợi nhập số để tính căn, tính ngay
+        // If waiting for input to calculate square root, calculate immediately
         if (waitForSquareRoot) {
             String result = calculateSquareRoot(displayValue);
             if (result.equals("Math ERROR")) return result;
@@ -92,21 +98,21 @@ public class CalculatorLogic {
             waitForSquareRoot = false;
         }
 
-        // Nếu đã có phép toán trước đó và không phải số mới, thực hiện phép tính
+        // If there's a previous operation and not a new number, perform the calculation
         if (!operator.isEmpty() && !isNewNumber) {
             String result = calculateResult(firstNumber, displayValue, operator);
             if (result.equals("Math ERROR")) return result;
             displayValue = result;
             firstNumber = result;
         } else if (isResult || !firstNumber.isEmpty()) {
-            // Sử dụng số hiện tại làm số đầu cho phép tính mới
+            // Use current number as first operand for new calculation
             firstNumber = displayValue;
         } else {
-            // Lưu số hiện tại làm số đầu
+            // Use current number as first operand
             firstNumber = displayValue;
         }
 
-        // Cập nhật trạng thái
+        // Update state
         operator = newOperator;
         isNewNumber = true;
         hasDecimal = false;
@@ -116,49 +122,49 @@ public class CalculatorLogic {
     }
 
     /**
-     * Tính toán kết quả khi nhấn dấu =
+     * Calculates result when equals button is pressed
      */
     public String calculateEquals() {
-        // Nếu đang đợi nhập số để tính căn, tính ngay
+        // If waiting for input to calculate square root, calculate immediately
         if (waitForSquareRoot) {
             String result = calculateSquareRoot(displayValue);
             if (result.equals("Math ERROR")) return result;
             displayValue = result;
-            firstNumber = result;  // Lưu kết quả làm số đầu cho phép tính tiếp
+            firstNumber = result;  // Save result as first operand for next calculation
             waitForSquareRoot = false;
-            clearExpression();  // Xóa biểu thức hiển thị
+            clearExpression();  // Clear expression display
             return displayValue;
         }
 
-        // Nếu không có phép toán hoặc chưa nhập số thứ hai, trả về số hiện tại
+        // If no operation or first number not entered, return current number
         if (operator.isEmpty() || isStart) {
             return displayValue;
         }
 
         try {
-            // Lấy số thứ hai cho phép tính
+            // Get second number for calculation
             String secondNumber = displayValue;
 
-            // Thực hiện phép tính
+            // Perform calculation
             String result = calculateResult(firstNumber, secondNumber, operator);
             if (result.equals("Math ERROR")) return result;
 
-            // Lưu lại phép tính vào history
+            // Save calculation to history
             String calculation = firstNumber + " " + operator + " " + secondNumber + " = " + result;
             addToHistory(calculation);
 
-            // Cập nhật trạng thái
+            // Update state
             displayValue = result;
-            firstNumber = result;  // Lưu kết quả làm số đầu cho phép tính tiếp theo
+            firstNumber = result;  // Save result as first operand for next calculation
             operator = "";         // Reset operator
             isNewNumber = true;
             hasDecimal = result.contains(",");
             isResult = true;
             isNegative = result.startsWith("-");
             negativeResult = false;
-            waitForSquareRoot = false;  // Reset trạng thái căn bậc hai
+            waitForSquareRoot = false;  // Reset square root state
             
-            // Xóa biểu thức hiển thị
+            // Clear expression display
             clearExpression();
 
             return displayValue;
@@ -169,10 +175,10 @@ public class CalculatorLogic {
     }
 
     /**
-     * Xử lý phép căn bậc hai
+     * Handles square root operation
      */
     public String inputSquareRoot() {
-        // Nếu có lastResult và đang bắt đầu phép tính mới
+        // If there's a lastResult and starting new calculation
         if (!lastResult.isEmpty() && isStart) {
             displayValue = lastResult;
         }
@@ -181,13 +187,13 @@ public class CalculatorLogic {
         if (!displayValue.equals("0")) {
             String result = calculateSquareRoot(displayValue);
             if (!result.equals("Math ERROR")) {
-                // Lưu kết quả để sử dụng trong các phép tính
+                // Save result for use in further calculations
                 displayValue = result;
                 if (!operator.isEmpty()) {
-                    // Nếu đang trong phép tính, cập nhật số thứ hai
+                    // If in calculation, update second number
                     isNewNumber = true;
                 } else {
-                    // Nếu là phép tính độc lập, cập nhật firstNumber
+                    // If standalone calculation, update firstNumber
                     firstNumber = result;
                 }
             }
@@ -197,7 +203,7 @@ public class CalculatorLogic {
     }
 
     /**
-     * Tính căn bậc hai của một số
+     * Calculates square root of a number
      */
     private String calculateSquareRoot(String number) {
         try {
@@ -215,7 +221,7 @@ public class CalculatorLogic {
                 negativeResult = false;
             }
 
-            // Lưu lại phép tính vào history
+            // Save calculation to history
             addToHistory("√(" + number + ") = " + formattedResult);
             
             return formattedResult;
@@ -225,7 +231,7 @@ public class CalculatorLogic {
     }
 
     /**
-     * Tính kết quả của một phép tính với hai số và một toán tử
+     * Calculates result of a calculation with two numbers and an operator
      */
     public String calculateResult(String num1, String num2, String op) {
         try {
@@ -244,7 +250,7 @@ public class CalculatorLogic {
     }
 
     /**
-     * Format số theo quy tắc hiển thị của máy tính
+     * Formats number according to calculator display rules
      */
     private String formatNumber(double value) {
         if (Double.isNaN(value) || Double.isInfinite(value)) {
@@ -254,11 +260,11 @@ public class CalculatorLogic {
         if (value == 0) return "0";
         
         double absValue = Math.abs(value);
-        // Sử dụng định dạng khoa học cho số rất lớn hoặc rất nhỏ
+        // Use scientific format for very large or very small numbers
         if (absValue >= 1e9 || (absValue < 1e-7 && absValue > 0)) {
             try {
                 String formatted = scientificFormat.format(value);
-                // Kiểm tra xem số có quá lớn không
+                // Check if number is too large
                 if (formatted.contains("E") && Integer.parseInt(formatted.substring(formatted.indexOf("E") + 1)) > 99) {
                     return "Math ERROR";
                 }
@@ -277,7 +283,7 @@ public class CalculatorLogic {
     }
 
     /**
-     * Chuyển đổi chuỗi hiển thị sang số
+     * Converts display string to number
      */
     private double parseDisplayValue(String value) {
         try {
@@ -288,7 +294,7 @@ public class CalculatorLogic {
     }
 
     /**
-     * Thực hiện các phép tính
+     * Performs calculations
      */
     private double performOperation(double x, double y, String operator) {
         double result;
@@ -327,7 +333,7 @@ public class CalculatorLogic {
                 default -> throw new ArithmeticException("Invalid operator");
             };
 
-            // Kiểm tra kết quả sau khi thực hiện phép tính
+            // Check result after calculation
             if (Double.isNaN(result) || Double.isInfinite(result)) {
                 throw new ArithmeticException("Result out of range");
             }
@@ -339,7 +345,7 @@ public class CalculatorLogic {
     }
 
     /**
-     * Xử lý lỗi và reset máy tính
+     * Handles error and resets calculator
      */
     private String handleError() {
         reset();
@@ -347,7 +353,7 @@ public class CalculatorLogic {
     }
 
     /**
-     * Reset máy tính về trạng thái ban đầu
+     * Resets calculator to initial state
      */
     public void reset() {
         displayValue = "0";
@@ -365,13 +371,13 @@ public class CalculatorLogic {
     }
 
     /**
-     * Thêm một phép tính vào lịch sử
+     * Adds a calculation to history
      */
     public void addToHistory(String calculation) {
         history.add(calculation);
     }
 
-    // Getter và setter methods
+    // Getter and setter methods
     public String getDisplayValue() {
         return displayValue;
     }
@@ -422,10 +428,10 @@ public class CalculatorLogic {
     }
 
     /**
-     * Xóa biểu thức hiển thị
+     * Clears expression display
      */
     public void clearExpression() {
-        // Phương thức này sẽ được gọi từ CalculatorPanel để xóa expressionDisplay
-        // Thêm code ở đây nếu cần xử lý thêm
+        // This method will be called from CalculatorPanel to handle additional processing
+        // Add code here if needed
     }
 }

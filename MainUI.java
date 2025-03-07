@@ -2,23 +2,30 @@ import java.awt.*;
 import javax.swing.*;
 import javax.swing.plaf.basic.BasicTabbedPaneUI;
 
+/**
+ * MainUI class represents the main window of the calculator application.
+ * It manages the tabbed interface containing the calculator and history panels.
+ */
 public class MainUI extends JFrame {
-    private final CalculatorLogic calculator;
-    private final CalculatorPanel calculatorPanel;
-    private final HistoryPanel historyPanel;
+    private final CalculatorLogic calculator;    // Core calculator logic
+    private final CalculatorPanel calculatorPanel; // Main calculator interface
+    private final HistoryPanel historyPanel;      // History view interface
 
+    /**
+     * Constructor initializes the main window and sets up the UI components
+     */
     public MainUI() {
         calculator = new CalculatorLogic();
         calculatorPanel = new CalculatorPanel(calculator);
         historyPanel = new HistoryPanel(calculator);
 
-        // Thiết lập cửa sổ chính
+        // Set up main window properties
         setTitle("Calculator Tool");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setMinimumSize(new Dimension(400, 600));
         getContentPane().setBackground(Color.BLACK);
 
-        // Tạo TabPane với UI tùy chỉnh
+        // Create custom TabPane with custom UI
         JTabbedPane tabbedPane = new JTabbedPane() {
             @Override
             public void updateUI() {
@@ -27,12 +34,12 @@ public class MainUI extends JFrame {
 
                     @Override
                     protected int calculateTabAreaHeight(int tabPlacement, int horizRunCount, int maxTabHeight) {
-                        return 40; // Chiều cao của tab
+                        return 40; // Tab height
                     }
 
                     @Override
                     protected int calculateTabWidth(int tabPlacement, int tabIndex, FontMetrics metrics) {
-                        return super.calculateTabWidth(tabPlacement, tabIndex, metrics) + 20; // Thêm khoảng cách giữa các tab
+                        return super.calculateTabWidth(tabPlacement, tabIndex, metrics) + 20; // Add spacing between tabs
                     }
                     
                     @Override
@@ -48,12 +55,12 @@ public class MainUI extends JFrame {
 
                     @Override
                     protected void paintContentBorder(Graphics g, int tabPlacement, int selectedIndex) {
-                        // Không vẽ viền content
+                        // Don't paint content border
                     }
 
                     @Override
                     protected void paintTabBorder(Graphics g, int tabPlacement, int tabIndex, int x, int y, int w, int h, boolean isSelected) {
-                        // Không vẽ viền tab
+                        // Don't paint tab border
                     }
 
                     @Override
@@ -66,19 +73,19 @@ public class MainUI extends JFrame {
 
                     @Override
                     protected void paintFocusIndicator(Graphics g, int tabPlacement, Rectangle[] rects, int tabIndex, Rectangle iconRect, Rectangle textRect, boolean isSelected) {
-                        // Không vẽ đường viền focus
+                        // Don't paint focus indicator
                     }
                 });
             }
         };
 
-        // Thiết lập giao diện cho TabPane
+        // Set up TabPane appearance
         tabbedPane.setBackground(Color.BLACK);
         tabbedPane.setForeground(Color.WHITE);
         tabbedPane.setBorder(null);
         tabbedPane.setFont(new Font("Arial", Font.BOLD, 16));
 
-        // Tạo ImageIcon từ file ảnh
+        // Create icons from image files
         ImageIcon calculatorIcon = new ImageIcon("Calculator.png");
         ImageIcon historyIcon = new ImageIcon("history.png");
 
@@ -88,11 +95,11 @@ public class MainUI extends JFrame {
         calculatorIcon = new ImageIcon(calcImg);
         historyIcon = new ImageIcon(histImg);
 
-        // Thêm các tab với icons
+        // Add tabs with icons
         tabbedPane.addTab("", calculatorIcon, calculatorPanel);
         tabbedPane.addTab("", historyIcon, historyPanel);
 
-        // Thêm TabPane vào frame
+        // Add TabPane to frame
         add(tabbedPane);
 
         setSize(400, 700);
