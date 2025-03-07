@@ -82,7 +82,7 @@ public class CalculatorPanel extends JPanel {
 
         JMenuItem sqrtItem = new JMenuItem("Căn bậc 2 (√)");
         sqrtItem.setFont(new Font("Arial", Font.BOLD, 14));
-        sqrtItem.setForeground(Color.WHITE);
+        sqrtItem.setForeground(Color.BLACK);
         sqrtItem.setBackground(new Color(40, 40, 40));
         sqrtItem.addActionListener(e -> new ButtonClickListener().handleOperator("√"));
         sqrtItem.addMouseListener(new MouseAdapter() {
@@ -96,7 +96,7 @@ public class CalculatorPanel extends JPanel {
 
         JMenuItem powerItem = new JMenuItem("Lũy thừa (^)");
         powerItem.setFont(new Font("Arial", Font.BOLD, 14));
-        powerItem.setForeground(Color.WHITE);
+        powerItem.setForeground(Color.BLACK);
         powerItem.setBackground(new Color(40, 40, 40));
         powerItem.addActionListener(e -> new ButtonClickListener().handleOperator("^"));
         powerItem.addMouseListener(new MouseAdapter() {
