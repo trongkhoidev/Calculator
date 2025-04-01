@@ -222,6 +222,8 @@ public class CalculatorPanel extends JPanel {
                 return;
             } else if (command.equals(",")) {
                 handleDecimalPoint();
+            } else if (command.equals("%")) {
+                handlePercentage();
             } else {
                 handleOperator(command);
             }
@@ -330,6 +332,14 @@ public class CalculatorPanel extends JPanel {
                 calculator.setStart(false);
             } else if (!currentText.contains(",")) {
                 display.setText(currentText + ",");
+            }
+        }
+
+        private void handlePercentage() {
+            String currentText = display.getText();
+            // Only add % if not already present and not zero
+            if (!currentText.endsWith("%") && !currentText.equals("0")) {
+                display.setText(currentText + "%");
             }
         }
 

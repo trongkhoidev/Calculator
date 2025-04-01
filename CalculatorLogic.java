@@ -130,10 +130,21 @@ public class CalculatorLogic {
             String result = calculateSquareRoot(displayValue);
             if (result.equals("Math ERROR")) return result;
             displayValue = result;
-            firstNumber = result;  // Save result as first operand for next calculation
+            firstNumber = result;
             waitForSquareRoot = false;
-            clearExpression();  // Clear expression display
+            clearExpression();
             return displayValue;
+        }
+
+        // Handle direct percentage (no operator)
+        if (displayValue.endsWith("%")) {
+            String numStr = displayValue.substring(0, displayValue.length() - 1);
+            double num = parseDisplayValue(numStr);
+            String result = formatNumber(num / 100);
+            displayValue = result;
+            firstNumber = result;
+            isResult = true;
+            return result;
         }
 
         // If no operation or first number not entered, return current number
@@ -155,18 +166,16 @@ public class CalculatorLogic {
 
             // Update state
             displayValue = result;
-            firstNumber = result;  // Save result as first operand for next calculation
-            operator = "";         // Reset operator
+            firstNumber = result;
+            operator = "";
             isNewNumber = true;
             hasDecimal = result.contains(",");
             isResult = true;
             isNegative = result.startsWith("-");
             negativeResult = false;
-            waitForSquareRoot = false;  // Reset square root state
+            waitForSquareRoot = false;
             
-            // Clear expression display
             clearExpression();
-
             return displayValue;
 
         } catch (ArithmeticException e) {
@@ -236,7 +245,22 @@ public class CalculatorLogic {
     public String calculateResult(String num1, String num2, String op) {
         try {
             double x = parseDisplayValue(num1);
-            double y = parseDisplayValue(num2);
+            double y;
+
+            // Handle percentage in second operand
+            if (num2.endsWith("%")) {
+                String numStr = num2.substring(0, num2.length() - 1);
+                y = parseDisplayValue(numStr);
+                // For percentage calculations in operations, calculate based on first number
+                if (op.equals("+") || op.equals("-")) {
+                    y = (y * x) / 100;  // Convert to percentage of first number
+                } else {
+                    y = y / 100;  // Just convert to decimal for other operations
+                }
+            } else {
+                y = parseDisplayValue(num2);
+            }
+
             double result = performOperation(x, y, op);
 
             if (Double.isNaN(result) || Double.isInfinite(result) || Math.abs(result) > MAX_VALUE) {
