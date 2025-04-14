@@ -139,12 +139,17 @@ public class CalculatorLogic {
         // Handle direct percentage (no operator)
         if (displayValue.endsWith("%")) {
             String numStr = displayValue.substring(0, displayValue.length() - 1);
-            double num = parseDisplayValue(numStr);
-            String result = formatNumber(num / 100);
-            displayValue = result;
-            firstNumber = result;
-            isResult = true;
-            return result;
+            try {
+                double num = parseDisplayValue(numStr);
+                double result = num / 100.0;
+                String formattedResult = formatNumber(result);
+                displayValue = formattedResult;
+                firstNumber = formattedResult;
+                isResult = true;
+                return formattedResult;
+            } catch (Exception e) {
+                return handleError();
+            }
         }
 
         // If no operation or first number not entered, return current number
@@ -251,18 +256,16 @@ public class CalculatorLogic {
             if (num2.endsWith("%")) {
                 String numStr = num2.substring(0, num2.length() - 1);
                 y = parseDisplayValue(numStr);
-                // For percentage calculations in operations, calculate based on first number
-                if (op.equals("+") || op.equals("-")) {
-                    y = (y * x) / 100;  // Convert to percentage of first number
-                } else {
-                    y = y / 100;  // Just convert to decimal for other operations
+                switch (op) {
+                    case "+" -> y = (y / 100.0) * x;  // Add y% of x to x
+                    case "-" -> y = (y / 100.0) * x;  // Subtract y% of x from x
+                    default -> y = y / 100.0;  // Just convert to decimal for other operations
                 }
             } else {
                 y = parseDisplayValue(num2);
             }
 
             double result = performOperation(x, y, op);
-
             if (Double.isNaN(result) || Double.isInfinite(result) || Math.abs(result) > MAX_VALUE) {
                 throw new ArithmeticException("Result out of range");
             }
@@ -321,9 +324,8 @@ public class CalculatorLogic {
      * Performs calculations
      */
     private double performOperation(double x, double y, String operator) {
-        double result;
         try {
-            result = switch (operator) {
+            return switch (operator) {
                 case "+" -> x + y;
                 case "-" -> x - y;
                 case "×" -> x * y;
@@ -331,15 +333,7 @@ public class CalculatorLogic {
                     if (y == 0) throw new ArithmeticException("Division by zero");
                     yield x / y;
                 }
-                case "%" -> {
-                    if (y == 0) throw new ArithmeticException("Modulo by zero");
-                    double quotient = x / y;
-                    double remainder = x >= 0 ? 
-                        x - (Math.floor(quotient) * y) : 
-                        x - (Math.ceil(quotient) * y);
-                    if (remainder < 0) remainder += Math.abs(y);
-                    yield remainder;
-                }
+                case "%" -> y / 100.0;  // Direct percentage conversion
                 case "^" -> {
                     if (x == 0 && y == 0) yield 1;
                     if (x == 0 && y < 0) throw new ArithmeticException("Zero power negative");
@@ -356,13 +350,6 @@ public class CalculatorLogic {
                 }
                 default -> throw new ArithmeticException("Invalid operator");
             };
-
-            // Check result after calculation
-            if (Double.isNaN(result) || Double.isInfinite(result)) {
-                throw new ArithmeticException("Result out of range");
-            }
-
-            return result;
         } catch (Exception e) {
             throw new ArithmeticException(e.getMessage());
         }
