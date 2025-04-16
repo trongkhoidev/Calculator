@@ -262,98 +262,19 @@ public class CalculatorPanel extends JPanel {
         @Override
         public void actionPerformed(ActionEvent event) {
             String command = event.getActionCommand();
-            
-            switch (command) {
-                case "sin", "cos", "tan", "cot" -> handleTrigonometric(command);
-                case "log" -> handleLogarithm(10);
-                case "ln" -> handleLogarithm(Math.E);
-                case "x²" -> handlePower(2);
-                case "x³" -> handlePower(3);
-                case "x^y" -> handlePower();
-                case "n!" -> handleFactorial();
-                case "π" -> handleConstant(Math.PI);
-                case "e" -> handleConstant(Math.E);
-                case "CE" -> handleClearEntry();
-                case "C" -> handleClear();
-                case "←" -> handleBackspace();
-                case "±" -> handleSignChange();
-                case "=" -> handleEquals();
-                case "." -> handleDecimalPoint();
-                default -> {
-                    if (command.matches("[0-9]")) {
-                        handleNumber(command);
-                    } else if (command.matches("[+\\-×÷]")) {
-                        handleOperator(command);
-                    }
-                }
-            }
-        }
 
-        private void handleTrigonometric(String func) {
-            try {
-                double value = Double.parseDouble(display.getText());
-                double result = calculator.trigonometricFunction(value, func);
-                display.setText(calculator.formatNumber(result));
-            } catch (Exception e) {
-                display.setText("Error");
-            }
-        }
-
-        private void handleLogarithm(double base) {
-            try {
-                double value = Double.parseDouble(display.getText());
-                if (value <= 0) {
-                    display.setText("Error");
-                    return;
-                }
-                double result = Math.log(value) / Math.log(base);
-                display.setText(calculator.formatNumber(result));
-            } catch (Exception e) {
-                display.setText("Error");
-            }
-        }
-
-        private void handlePower(double exponent) {
-            try {
-                double value = Double.parseDouble(display.getText());
-                double result = Math.pow(value, exponent);
-                display.setText(calculator.formatNumber(result));
-            } catch (Exception e) {
-                display.setText("Error");
-            }
-        }
-
-        private void handlePower() {
-            // Store current value and wait for exponent
-            calculator.setFirstNumber(display.getText());
-            calculator.setOperator("^");
-            expressionDisplay.setText(display.getText() + " ^ ");
-            display.setText("0");
-        }
-
-        private void handleFactorial() {
-            try {
-                double value = Double.parseDouble(display.getText());
-                double result = calculator.factorial(value);
-                display.setText(calculator.formatNumber(result));
-            } catch (Exception e) {
-                display.setText("Error");
-            }
-        }
-
-        private void handleConstant(double constant) {
-            display.setText(calculator.formatNumber(constant));
-        }
-
-        private void handleClearEntry() {
-            display.setText("0");
-            calculator.setNewNumber(true);
-        }
-
-        private void handleSignChange() {
-            String current = display.getText();
-            if (current.startsWith("-")) {
-                display.setText(current.substring(1));
+            if (command.equals("←")) {
+                handleBackspace();
+            } else if (command.matches("[0-9]")) {
+                handleNumber(command);
+            } else if (command.equals("C")) {
+                handleClear();
+            } else if (command.equals("=")) {
+                handleEquals();
+            } else if (command.equals("^/√")) {
+                return;
+            } else if (command.equals(",")) {
+                handleDecimalPoint();
             } else {
                 display.setText("-" + current);
             }
@@ -462,6 +383,14 @@ public class CalculatorPanel extends JPanel {
                 calculator.setStart(false);
             } else if (!currentText.contains(",")) {
                 display.setText(currentText + ",");
+            }
+        }
+
+        private void handlePercentage() {
+            String currentText = display.getText();
+            // Only add % if not already present and not zero
+            if (!currentText.endsWith("%") && !currentText.equals("0")) {
+                display.setText(currentText + "%");
             }
         }
 
