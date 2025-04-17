@@ -1,5 +1,6 @@
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Stack;
 
 /**
  * CalculatorLogic class handles all the mathematical operations and state management
@@ -25,6 +26,7 @@ public class CalculatorLogic {
     private boolean negativeResult = false;    // Flag for negative result
     private String lastResult = "";      // Stores last calculation result
     private String pendingOperation = ""; // Stores pending operation
+    private boolean isDegreeMode = true; // Flag for angle mode (true = degrees, false = radians)
     
     // History storage
     private final ArrayList<String> history = new ArrayList<>();
@@ -279,34 +281,18 @@ public class CalculatorLogic {
     /**
      * Formats number according to calculator display rules
      */
-    private String formatNumber(double value) {
+    public String formatNumber(double value) {
         if (Double.isNaN(value) || Double.isInfinite(value)) {
-            return "Math ERROR";
+            return "Error";
         }
         
-        if (value == 0) return "0";
-        
-        double absValue = Math.abs(value);
-        // Use scientific format for very large or very small numbers
-        if (absValue >= 1e9 || (absValue < 1e-7 && absValue > 0)) {
-            try {
-                String formatted = scientificFormat.format(value);
-                // Check if number is too large
-                if (formatted.contains("E") && Integer.parseInt(formatted.substring(formatted.indexOf("E") + 1)) > 99) {
-                    return "Math ERROR";
-                }
-                return formatted.replace("E", "e").replace(".", ",");
-            } catch (Exception e) {
-                return "Math ERROR";
-            }
+        // Handle very large or very small numbers
+        if (Math.abs(value) > MAX_VALUE || (Math.abs(value) < MIN_VALUE && value != 0)) {
+            return scientificFormat.format(value);
         }
         
-        String result = standardFormat.format(value);
-        if (result.contains(",")) {
-            result = result.replaceAll("0+$", "").replaceAll(",$", "");
-        }
-        
-        return result;
+        // Format regular numbers
+        return standardFormat.format(value);
     }
 
     /**
@@ -444,5 +430,136 @@ public class CalculatorLogic {
     public void clearExpression() {
         // This method will be called from CalculatorPanel to handle additional processing
         // Add code here if needed
+    }
+
+    /**
+     * Calculates factorial of a number
+     * @param n The number to calculate factorial for
+     * @return The factorial result
+     */
+    public double factorial(double n) {
+        if (n < 0 || n != Math.floor(n)) {
+            throw new IllegalArgumentException("Factorial is only defined for non-negative integers");
+        }
+        double result = 1;
+        for (int i = 2; i <= n; i++) {
+            result *= i;
+        }
+        return result;
+    }
+
+    /**
+     * Performs trigonometric functions based on current angle mode
+     * @param x The angle value
+     * @param func The trigonometric function to apply
+     * @return The result of the trigonometric function
+     */
+    public double trigonometricFunction(double x, String func) {
+        double angle = isDegreeMode ? Math.toRadians(x) : x;
+        return switch (func) {
+            case "sin" -> Math.sin(angle);
+            case "cos" -> Math.cos(angle);
+            case "tan" -> Math.tan(angle);
+            case "cot" -> 1.0 / Math.tan(angle);
+            default -> throw new IllegalArgumentException("Invalid trigonometric function");
+        };
+    }
+
+    /**
+     * Evaluates a complex mathematical expression
+     * @param expression The expression to evaluate
+     * @return The result of the evaluation
+     */
+    public String evaluateExpression(String expression) {
+        try {
+            // Remove whitespace and convert to lowercase
+            expression = expression.replaceAll("\\s+", "").toLowerCase();
+            
+            // Handle parentheses
+            while (expression.contains("(")) {
+                int start = expression.lastIndexOf("(");
+                int end = expression.indexOf(")", start);
+                if (end == -1) throw new IllegalArgumentException("Mismatched parentheses");
+                
+                String subExpr = expression.substring(start + 1, end);
+                String result = evaluateSimpleExpression(subExpr);
+                expression = expression.substring(0, start) + result + expression.substring(end + 1);
+            }
+            
+            return evaluateSimpleExpression(expression);
+        } catch (Exception e) {
+            return handleError();
+        }
+    }
+
+    /**
+     * Evaluates a simple expression without parentheses
+     * @param expression The expression to evaluate
+     * @return The result of the evaluation
+     */
+    private String evaluateSimpleExpression(String expression) {
+        Stack<Double> numbers = new Stack<>();
+        Stack<String> operators = new Stack<>();
+        
+        String[] tokens = expression.split("(?<=[-+*/^])|(?=[-+*/^])");
+        
+        for (String token : tokens) {
+            if (token.matches("-?\\d+(\\.\\d+)?")) {
+                numbers.push(Double.parseDouble(token));
+            } else if (token.matches("[+\\-*/^]")) {
+                while (!operators.isEmpty() && hasPrecedence(token, operators.peek())) {
+                    numbers.push(applyOperator(operators.pop(), numbers.pop(), numbers.pop()));
+                }
+                operators.push(token);
+            }
+        }
+        
+        while (!operators.isEmpty()) {
+            numbers.push(applyOperator(operators.pop(), numbers.pop(), numbers.pop()));
+        }
+        
+        return formatNumber(numbers.pop());
+    }
+
+    private boolean hasPrecedence(String op1, String op2) {
+        if (op2.equals("(") || op2.equals(")")) return false;
+        return (op1.equals("*") || op1.equals("/")) && (op2.equals("+") || op2.equals("-"));
+    }
+
+    private double applyOperator(String operator, double b, double a) {
+        return switch (operator) {
+            case "+" -> a + b;
+            case "-" -> a - b;
+            case "*" -> a * b;
+            case "/" -> {
+                if (b == 0) throw new ArithmeticException("Division by zero");
+                yield a / b;
+            }
+            case "^" -> Math.pow(a, b);
+            default -> throw new IllegalArgumentException("Invalid operator");
+        };
+    }
+
+    /**
+     * Toggles between degree and radian mode
+     */
+    public void toggleAngleMode() {
+        isDegreeMode = !isDegreeMode;
+    }
+
+    /**
+     * Gets the current angle mode
+     * @return true if in degree mode, false if in radian mode
+     */
+    public boolean isDegreeMode() {
+        return isDegreeMode;
+    }
+
+    /**
+     * Sets the new number flag
+     * @param isNew Flag indicating if this is a new number
+     */
+    public void setNewNumber(boolean isNew) {
+        this.isNewNumber = isNew;
     }
 }
