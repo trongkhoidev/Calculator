@@ -1,4 +1,4 @@
-package do_an_application1;
+package Calculator_Team3;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -21,9 +21,13 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import javax.swing.BorderFactory;
+import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JColorChooser;
+import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JMenu;
@@ -68,6 +72,11 @@ public class CalculatorGUI extends JFrame implements ActionListener, KeyListener
     private boolean isDarkMode = true;
     private JToggleButton themeToggleButton;
     
+    // Font customization
+    private Font currentFont = new Font("Arial", Font.PLAIN, 14);
+    private int fontSize = 14;
+    private String fontFamily = "Arial";
+    
     // Colors for dark mode
     private Color colorDisableStats = Color.lightGray;
     private Color colorEnnabaleStar = Color.black;
@@ -84,7 +93,7 @@ public class CalculatorGUI extends JFrame implements ActionListener, KeyListener
     private Color lightModeFunctionButton = new Color(230, 230, 230);
     private Color lightModeTextColor = Color.BLACK;
     
-    private Balan balan;
+    private CalculatorLogic cLogic;
     
     // History related fields
     private List<CalculationHistory> historyList;
@@ -104,8 +113,8 @@ public class CalculatorGUI extends JFrame implements ActionListener, KeyListener
         historyList = new ArrayList<>();
         loadHistory();
         
-        resetValue(); // dat lai cac gia tri
-        changeMode(); // che do hien thi
+        resetValue();
+        changeMode();
     }
 
     private void changeMode() {
@@ -124,10 +133,15 @@ public class CalculatorGUI extends JFrame implements ActionListener, KeyListener
             frameHeight = 500;
             frame.setTitle("Calculator - History");
         }
+        if (mode == 3) {
+            frameWidth = 400;
+            frameHeight = 400;
+            frame.setTitle("Calculator - Customize");
+        }
 
         createListLabelButton(mode);
-        balan.setDegOrRad(true);
-        balan.setRadix(10);
+        cLogic.setDegOrRad(true);
+        cLogic.setRadix(10);
 
         frame.getContentPane().removeAll();
         frame.setSize(frameWidth, frameHeight);
@@ -136,7 +150,7 @@ public class CalculatorGUI extends JFrame implements ActionListener, KeyListener
 
         frame.getContentPane().validate();
         frame.setVisible(true);
-        if (mode != 2) {
+        if (mode != 2 && mode != 3) {
             tfDisplay.requestFocus();
         }
     }
@@ -180,6 +194,9 @@ public class CalculatorGUI extends JFrame implements ActionListener, KeyListener
         if (mode == 2) {
             // History mode
             mainPanel = createHistoryPanel();
+        } else if (mode == 3) {
+            // Customize mode
+            mainPanel = createCustomizePanel();
         } else {
             // Calculator modes
             disPlayPanel = createDisplayPanel();
@@ -376,6 +393,7 @@ public class CalculatorGUI extends JFrame implements ActionListener, KeyListener
         mm.add(createMenuItem("Basic", KeyEvent.VK_B));
         mm.add(createMenuItem("Advanced", KeyEvent.VK_A));
         mm.add(createMenuItem("History", KeyEvent.VK_H));
+        mm.add(createMenuItem("Customize", KeyEvent.VK_C));
         mm.add(createMenuItem("Exit", KeyEvent.VK_X));
         mb.add(mm);
         
@@ -411,7 +429,7 @@ public class CalculatorGUI extends JFrame implements ActionListener, KeyListener
         tfDisplay.setBorder(null);
         tfDisplay.setForeground(textColor);
         tfDisplay.setBackground(backgroundColor);
-        tfDisplay.addKeyListener(this);// bac su kien khi an phim
+        tfDisplay.addKeyListener(this);
         panel.add(tfDisplay, BorderLayout.CENTER);
 
         lbAns = new JLabel("0");
@@ -441,7 +459,7 @@ public class CalculatorGUI extends JFrame implements ActionListener, KeyListener
             // Set button appearance
             btnArr[i].setFocusPainted(false);
             btnArr[i].setBorderPainted(false);
-            btnArr[i].setFont(new Font("Arial", Font.BOLD, 18));
+            btnArr[i].setFont(currentFont);
             btnArr[i].setForeground(textColor);
             
             // Set round shape and color based on button type
@@ -490,7 +508,7 @@ public class CalculatorGUI extends JFrame implements ActionListener, KeyListener
             // Set button appearance
             btnArr[i].setFocusPainted(false);
             btnArr[i].setBorderPainted(false);
-            btnArr[i].setFont(new Font("Arial", Font.BOLD, 16));
+            btnArr[i].setFont(currentFont);
             btnArr[i].setForeground(textColor);
             
             // Set round shape and color based on button type
@@ -624,6 +642,7 @@ public class CalculatorGUI extends JFrame implements ActionListener, KeyListener
         btn.setContentAreaFilled(false);
         btn.addActionListener(this);
         btn.setMargin(new Insets(0, 0, 0, 0));
+        btn.setFont(currentFont);
         return btn;
     }
 
@@ -699,11 +718,9 @@ public class CalculatorGUI extends JFrame implements ActionListener, KeyListener
         return arr;
     }
 
-    // ----------------------- Action ----------------------- //
-    // dat lai gia tri cho balan
     private void resetValue() {
-        balan = new Balan();
-        balan.setError(false);
+        cLogic = new CalculatorLogic();
+        cLogic.setError(false);
         if (mode == 2) {
             setRadix();
         }
@@ -712,26 +729,26 @@ public class CalculatorGUI extends JFrame implements ActionListener, KeyListener
         }
     }
 
-    // cho phep chen ky tu vao vi tri con tro
+    // Allow insertion of a string at the caret position in the display
     private void insertMathString(String str) {
         int index = tfDisplay.getCaretPosition();
-        StringBuilder s = new StringBuilder(tfDisplay.getText() + ""); // copy
-        s.insert(index, str); // insert text at index control
-        String s1 = new String(s); // convert to string
-        tfDisplay.setText(s1); // set text for jtextField
-        tfDisplay.requestFocus(); // focus jtextFiedl
+        StringBuilder s = new StringBuilder(tfDisplay.getText() + "");
+        s.insert(index, str);
+        String s1 = new String(s);
+        tfDisplay.setText(s1);
+        tfDisplay.requestFocus();
         tfDisplay.setCaretPosition(index + str.length());
     }
 
-    // tra ve ket qua
+    // Calculate and display the result
     private void result() {
-        balan.setError(false);
+        cLogic.setError(false);
         String expression = tfDisplay.getText();
-        ans = balan.valueMath(expression);
+        ans = cLogic.valueMath(expression);
         
-        if (!balan.isError()) {
-            balan.var[0] = ans;
-            String result = balan.numberToString(ans, balan.getRadix(), balan.getSizeRound());
+        if (!cLogic.isError()) {
+            cLogic.var[0] = ans;
+            String result = cLogic.numberToString(ans, cLogic.getRadix(), cLogic.getSizeRound());
             lbAns.setText(result);
             
             // Add to history
@@ -742,7 +759,7 @@ public class CalculatorGUI extends JFrame implements ActionListener, KeyListener
     }
 
     private void actionCE() {
-        balan.setError(false);
+        cLogic.setError(false);
         if (mode == 1) {
             lbStats.setForeground(colorDisableStats);
         }
@@ -750,31 +767,30 @@ public class CalculatorGUI extends JFrame implements ActionListener, KeyListener
         tfDisplay.requestFocus();
 
         lbAns.setText("0");
-
     }
 
     private void setDegOrRad() {
         if (radRad.isSelected()) {
-            balan.setDegOrRad(false);
+            cLogic.setDegOrRad(false);
         }
         if (radDeg.isSelected()) {
-            balan.setDegOrRad(true);
+            cLogic.setDegOrRad(true);
         }
         tfDisplay.requestFocus();
     }
 
     private void setRadix() {
         if (radBin.isSelected()) {
-            balan.setRadix(2);
+            cLogic.setRadix(2);
         }
         if (radOct.isSelected()) {
-            balan.setRadix(8);
+            cLogic.setRadix(8);
         }
         if (radDec.isSelected()) {
-            balan.setRadix(10);
+            cLogic.setRadix(10);
         }
         if (radHex.isSelected()) {
-            balan.setRadix(16);
+            cLogic.setRadix(16);
         }
         tfDisplay.requestFocus();
     }
@@ -783,7 +799,7 @@ public class CalculatorGUI extends JFrame implements ActionListener, KeyListener
     public void actionPerformed(ActionEvent evt) {
         String command = evt.getActionCommand();
 
-        // Chuyển chế độ
+        // Change mode based on menu selection
         if (command.equals("Basic")) {
             mode = 0;
             changeMode();
@@ -800,24 +816,29 @@ public class CalculatorGUI extends JFrame implements ActionListener, KeyListener
             changeMode();
             return;
         }
+        if (command.equals("Customize")) {
+            mode = 3;
+            changeMode();
+            return;
+        }
         if (command.equals("Exit")) {
             System.exit(0);
         }
 
-        // Xử lý nút C (Clear All)
-        if (mode != 2 && evt.getSource() == btnArr[0]) { // btnArr[0] là vị trí nút "C"
+        // Handle button actions
+        if (mode != 2 && evt.getSource() == btnArr[0]) {
             resetValue();
             actionCE();
             return;
         }
 
-        // Xử lý nút ← (Backspace) - Delete character to the left
+        // Handle backspace button action
         if (mode != 2 && evt.getSource() == btnArr[1]) {
             actionDel();
             return;
         }
         
-        // Xử lý nút → (Forward Delete) - Delete character to the right
+        // Handle forward delete button action
         if (mode == 0 && evt.getSource() == btnArr[2]) {
             actionForwardDel();
             return;
@@ -841,10 +862,10 @@ public class CalculatorGUI extends JFrame implements ActionListener, KeyListener
             }
             if (command.equals("ln")) {
                 result();
-                if (!balan.isError()) {
-                    balan.var[0] = Math.log(ans);
-                    lbAns.setText(balan.numberToString(Math.log(ans), balan.getRadix(),
-                            balan.getSizeRound()));
+                if (!cLogic.isError()) {
+                    cLogic.var[0] = Math.log(ans);
+                    lbAns.setText(cLogic.numberToString(Math.log(ans), cLogic.getRadix(),
+                    cLogic.getSizeRound()));
                 }
                 return;
             }
@@ -860,12 +881,12 @@ public class CalculatorGUI extends JFrame implements ActionListener, KeyListener
 
     @Override
     public void keyReleased(KeyEvent ke) {
-
+        // No action needed on key release
     }
 
     @Override
     public void keyTyped(KeyEvent ke) {
-
+        // No action needed on key typed
     }
 
     // Add calculation to history
@@ -878,7 +899,7 @@ public class CalculatorGUI extends JFrame implements ActionListener, KeyListener
         String timestamp = sdf.format(new Date());
         
         CalculationHistory history = new CalculationHistory(expression, result, timestamp);
-        historyList.add(0, history); // Add to the beginning of the list
+        historyList.add(0, history);
         
         // Limit history size to 100 entries
         if (historyList.size() > 100) {
@@ -931,27 +952,328 @@ public class CalculatorGUI extends JFrame implements ActionListener, KeyListener
     // Delete character to the left of cursor
     private void actionDel() {
         int index = tfDisplay.getCaretPosition();
-        StringBuilder s = new StringBuilder(tfDisplay.getText() + ""); // copy
+        StringBuilder s = new StringBuilder(tfDisplay.getText() + "");
         if (index > 0) {
             s.deleteCharAt(index - 1);
-            String s1 = new String(s); // convert to string
-            tfDisplay.setText(s1); // set text for jtextField
+            String s1 = new String(s);
+            tfDisplay.setText(s1);
             tfDisplay.setCaretPosition(index - 1);
         }
-        tfDisplay.requestFocus(); // focus jtextFiedl
+        tfDisplay.requestFocus();
     }
     
     // Delete character to the right of cursor (forward delete)
     private void actionForwardDel() {
         int index = tfDisplay.getCaretPosition();
-        StringBuilder s = new StringBuilder(tfDisplay.getText() + ""); // copy
+        StringBuilder s = new StringBuilder(tfDisplay.getText() + "");
         if (index < s.length()) {
             s.deleteCharAt(index);
-            String s1 = new String(s); // convert to string
-            tfDisplay.setText(s1); // set text for jtextField
+            String s1 = new String(s);
+            tfDisplay.setText(s1);
             tfDisplay.setCaretPosition(index);
         }
-        tfDisplay.requestFocus(); // focus jtextFiedl
+        tfDisplay.requestFocus();
+    }
+
+    // Create customize panel for mode 3
+    private JPanel createCustomizePanel() {
+        JPanel panel = new JPanel();
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        panel.setBackground(isDarkMode ? backgroundColor : lightModeBackground);
+        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        
+        // Font customization section
+        JPanel fontPanel = new JPanel(new BorderLayout(10, 10));
+        fontPanel.setBackground(isDarkMode ? backgroundColor : lightModeBackground);
+        fontPanel.setBorder(BorderFactory.createTitledBorder(
+            BorderFactory.createLineBorder(isDarkMode ? Color.GRAY : Color.DARK_GRAY, 1),
+            "Font Settings",
+            0,
+            0,
+            currentFont,
+            isDarkMode ? textColor : lightModeTextColor
+        ));
+        
+        // Font family selection
+        JPanel fontFamilyPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        fontFamilyPanel.setBackground(isDarkMode ? backgroundColor : lightModeBackground);
+        JLabel fontFamilyLabel = new JLabel("Font Family:");
+        fontFamilyLabel.setForeground(isDarkMode ? textColor : lightModeTextColor);
+        
+        String[] fontFamilies = {"Arial", "Times New Roman", "Courier New", "Verdana", "Tahoma", "Calibri"};
+        JComboBox<String> fontFamilyComboBox = new JComboBox<>(fontFamilies);
+        fontFamilyComboBox.setSelectedItem(fontFamily);
+        fontFamilyComboBox.addActionListener(e -> {
+            fontFamily = (String) fontFamilyComboBox.getSelectedItem();
+            updateFont();
+        });
+        
+        fontFamilyPanel.add(fontFamilyLabel);
+        fontFamilyPanel.add(fontFamilyComboBox);
+        
+        // Font size selection
+        JPanel fontSizePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        fontSizePanel.setBackground(isDarkMode ? backgroundColor : lightModeBackground);
+        JLabel fontSizeLabel = new JLabel("Font Size:");
+        fontSizeLabel.setForeground(isDarkMode ? textColor : lightModeTextColor);
+        
+        Integer[] fontSizes = {10, 12, 14, 16, 18, 20, 22, 24};
+        JComboBox<Integer> fontSizeComboBox = new JComboBox<>(fontSizes);
+        fontSizeComboBox.setSelectedItem(fontSize);
+        fontSizeComboBox.addActionListener(e -> {
+            fontSize = (Integer) fontSizeComboBox.getSelectedItem();
+            updateFont();
+        });
+        
+        fontSizePanel.add(fontSizeLabel);
+        fontSizePanel.add(fontSizeComboBox);
+        
+        // Font style options
+        JPanel fontStylePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        fontStylePanel.setBackground(isDarkMode ? backgroundColor : lightModeBackground);
+        
+        JCheckBox boldCheckBox = new JCheckBox("Bold");
+        boldCheckBox.setForeground(isDarkMode ? textColor : lightModeTextColor);
+        boldCheckBox.setBackground(isDarkMode ? backgroundColor : lightModeBackground);
+        boldCheckBox.setSelected(currentFont.isBold());
+        
+        JCheckBox italicCheckBox = new JCheckBox("Italic");
+        italicCheckBox.setForeground(isDarkMode ? textColor : lightModeTextColor);
+        italicCheckBox.setBackground(isDarkMode ? backgroundColor : lightModeBackground);
+        italicCheckBox.setSelected(currentFont.isItalic());
+        
+        boldCheckBox.addActionListener(e -> {
+            int style = 0;
+            if (boldCheckBox.isSelected()) style |= Font.BOLD;
+            if (italicCheckBox.isSelected()) style |= Font.ITALIC;
+            currentFont = new Font(fontFamily, style, fontSize);
+            updateUI();
+        });
+        
+        italicCheckBox.addActionListener(e -> {
+            int style = 0;
+            if (boldCheckBox.isSelected()) style |= Font.BOLD;
+            if (italicCheckBox.isSelected()) style |= Font.ITALIC;
+            currentFont = new Font(fontFamily, style, fontSize);
+            updateUI();
+        });
+        
+        fontStylePanel.add(boldCheckBox);
+        fontStylePanel.add(italicCheckBox);
+        
+        // Font panel layout
+        JPanel fontOptionsPanel = new JPanel();
+        fontOptionsPanel.setLayout(new BoxLayout(fontOptionsPanel, BoxLayout.Y_AXIS));
+        fontOptionsPanel.setBackground(isDarkMode ? backgroundColor : lightModeBackground);
+        fontOptionsPanel.add(fontFamilyPanel);
+        fontOptionsPanel.add(fontSizePanel);
+        fontOptionsPanel.add(fontStylePanel);
+        
+        fontPanel.add(fontOptionsPanel, BorderLayout.NORTH);
+        
+        // Color customization section
+        JPanel colorPanel = new JPanel();
+        colorPanel.setLayout(new BoxLayout(colorPanel, BoxLayout.Y_AXIS));
+        colorPanel.setBackground(isDarkMode ? backgroundColor : lightModeBackground);
+        colorPanel.setBorder(BorderFactory.createTitledBorder(
+            BorderFactory.createLineBorder(isDarkMode ? Color.GRAY : Color.DARK_GRAY, 1),
+            "Color Settings",
+            0,
+            0,
+            currentFont,
+            isDarkMode ? textColor : lightModeTextColor
+        ));
+        
+        // Button color customization
+        JPanel buttonColorPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        buttonColorPanel.setBackground(isDarkMode ? backgroundColor : lightModeBackground);
+        
+        JLabel numberButtonLabel = new JLabel("Number Buttons:");
+        numberButtonLabel.setForeground(isDarkMode ? textColor : lightModeTextColor);
+        
+        JButton numberColorButton = new JButton("Choose Color");
+        numberColorButton.setBackground(isDarkMode ? numberButtonColor : lightModeNumberButton);
+        numberColorButton.addActionListener(e -> {
+            Color selectedColor = JColorChooser.showDialog(
+                frame,
+                "Choose Number Button Color",
+                isDarkMode ? numberButtonColor : lightModeNumberButton
+            );
+            
+            if (selectedColor != null) {
+                if (isDarkMode) {
+                    numberButtonColor = selectedColor;
+                } else {
+                    lightModeNumberButton = selectedColor;
+                }
+                numberColorButton.setBackground(selectedColor);
+                updateUI();
+            }
+        });
+        
+        buttonColorPanel.add(numberButtonLabel);
+        buttonColorPanel.add(numberColorButton);
+        
+        // Operator button color
+        JPanel operatorColorPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        operatorColorPanel.setBackground(isDarkMode ? backgroundColor : lightModeBackground);
+        
+        JLabel operatorButtonLabel = new JLabel("Operator Buttons:");
+        operatorButtonLabel.setForeground(isDarkMode ? textColor : lightModeTextColor);
+        
+        JButton operatorColorButton = new JButton("Choose Color");
+        operatorColorButton.setBackground(isDarkMode ? operatorButtonColor : lightModeOperatorButton);
+        operatorColorButton.addActionListener(e -> {
+            Color selectedColor = JColorChooser.showDialog(
+                frame,
+                "Choose Operator Button Color",
+                isDarkMode ? operatorButtonColor : lightModeOperatorButton
+            );
+            
+            if (selectedColor != null) {
+                if (isDarkMode) {
+                    operatorButtonColor = selectedColor;
+                } else {
+                    lightModeOperatorButton = selectedColor;
+                }
+                operatorColorButton.setBackground(selectedColor);
+                updateUI();
+            }
+        });
+        
+        operatorColorPanel.add(operatorButtonLabel);
+        operatorColorPanel.add(operatorColorButton);
+        
+        // Background color
+        JPanel backgroundColorPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        backgroundColorPanel.setBackground(isDarkMode ? backgroundColor : lightModeBackground);
+        
+        JLabel backgroundLabel = new JLabel("Background:");
+        backgroundLabel.setForeground(isDarkMode ? textColor : lightModeTextColor);
+        
+        JButton backgroundColorButton = new JButton("Choose Color");
+        backgroundColorButton.setBackground(isDarkMode ? backgroundColor : lightModeBackground);
+        backgroundColorButton.addActionListener(e -> {
+            Color selectedColor = JColorChooser.showDialog(
+                frame,
+                "Choose Background Color",
+                isDarkMode ? backgroundColor : lightModeBackground
+            );
+            
+            if (selectedColor != null) {
+                if (isDarkMode) {
+                    backgroundColor = selectedColor;
+                } else {
+                    lightModeBackground = selectedColor;
+                }
+                backgroundColorButton.setBackground(selectedColor);
+                panel.setBackground(selectedColor);
+                fontPanel.setBackground(selectedColor);
+                colorPanel.setBackground(selectedColor);
+                updateUI();
+            }
+        });
+        
+        backgroundColorPanel.add(backgroundLabel);
+        backgroundColorPanel.add(backgroundColorButton);
+        
+        // Text color
+        JPanel textColorPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        textColorPanel.setBackground(isDarkMode ? backgroundColor : lightModeBackground);
+        
+        JLabel textColorLabel = new JLabel("Text Color:");
+        textColorLabel.setForeground(isDarkMode ? textColor : lightModeTextColor);
+        
+        JButton textColorButton = new JButton("Choose Color");
+        textColorButton.setBackground(isDarkMode ? textColor : lightModeTextColor);
+        textColorButton.setForeground(isDarkMode ? backgroundColor : lightModeBackground);
+        textColorButton.addActionListener(e -> {
+            Color selectedColor = JColorChooser.showDialog(
+                frame,
+                "Choose Text Color",
+                isDarkMode ? textColor : lightModeTextColor
+            );
+            
+            if (selectedColor != null) {
+                if (isDarkMode) {
+                    textColor = selectedColor;
+                } else {
+                    lightModeTextColor = selectedColor;
+                }
+                textColorButton.setBackground(selectedColor);
+                textColorLabel.setForeground(selectedColor);
+                numberButtonLabel.setForeground(selectedColor);
+                operatorButtonLabel.setForeground(selectedColor);
+                backgroundLabel.setForeground(selectedColor);
+                updateUI();
+            }
+        });
+        
+        textColorPanel.add(textColorLabel);
+        textColorPanel.add(textColorButton);
+        
+        // Add color panels
+        colorPanel.add(buttonColorPanel);
+        colorPanel.add(operatorColorPanel);
+        colorPanel.add(backgroundColorPanel);
+        colorPanel.add(textColorPanel);
+        
+        // Reset button to default values
+        JPanel resetPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        resetPanel.setBackground(isDarkMode ? backgroundColor : lightModeBackground);
+        
+        JButton resetButton = new JButton("Reset to Default");
+        resetButton.addActionListener(e -> {
+            resetCustomizationToDefault();
+            changeMode();
+        });
+        
+        resetPanel.add(resetButton);
+        
+        // Add all sections to the main panel
+        panel.add(fontPanel);
+        panel.add(Box.createRigidArea(new Dimension(0, 10)));
+        panel.add(colorPanel);
+        panel.add(Box.createRigidArea(new Dimension(0, 10)));
+        panel.add(resetPanel);
+        
+        return panel;
+    }
+    
+    // Update font across the UI
+    private void updateFont() {
+        currentFont = new Font(fontFamily, currentFont.getStyle(), fontSize);
+        updateUI();
+    }
+    
+    // Update UI with current customization settings
+    private void updateUI() {
+        // This will trigger a rebuild of the UI with current settings
+        changeMode();
+    }
+    
+    // Reset customization to default values
+    private void resetCustomizationToDefault() {
+        // Reset font
+        fontFamily = "Arial";
+        fontSize = 14;
+        currentFont = new Font(fontFamily, Font.PLAIN, fontSize);
+        
+        // Reset colors for dark mode
+        if (isDarkMode) {
+            backgroundColor = Color.BLACK;
+            textColor = Color.WHITE;
+            operatorButtonColor = new Color(255, 153, 0);
+            numberButtonColor = new Color(51, 51, 51);
+            functionButtonColor = new Color(192, 192, 192);
+        } else {
+            // Reset colors for light mode
+            lightModeBackground = new Color(240, 240, 240);
+            lightModeTextColor = Color.BLACK;
+            lightModeOperatorButton = new Color(255, 204, 102);
+            lightModeNumberButton = new Color(220, 220, 220);
+            lightModeFunctionButton = new Color(230, 230, 230);
+        }
     }
 }
 
